@@ -42,12 +42,30 @@ window.getCurrentUser = async function getCurrentUser() {
   });
 };
 
-window.sendMessageStream = async function sendMessageStream({ message, history, onDelta, signal }) {
+window.fetchChatSessions = async function fetchChatSessions() {
+  return fetchWithJson("/api/chat/sessions", {
+    method: "GET",
+  });
+};
+
+window.createChatSession = async function createChatSession() {
+  return fetchWithJson("/api/chat/sessions", {
+    method: "POST",
+  });
+};
+
+window.getChatSession = async function getChatSession(sessionKey) {
+  return fetchWithJson(`/api/chat/sessions/${sessionKey}`, {
+    method: "GET",
+  });
+};
+
+window.sendMessageStream = async function sendMessageStream({ message, history, sessionKey, onDelta, onDone, signal }) {
   const response = await fetch(`${API_BASE}/api/chat/stream`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, history }),
+    body: JSON.stringify({ message, history, session_key: sessionKey }),
     signal,
   });
 
@@ -95,6 +113,10 @@ window.sendMessageStream = async function sendMessageStream({ message, history, 
 
       if (payload.delta) {
         onDelta(payload.delta);
+      }
+
+      if (payload.done) {
+        onDone?.(payload);
       }
     }
   }
